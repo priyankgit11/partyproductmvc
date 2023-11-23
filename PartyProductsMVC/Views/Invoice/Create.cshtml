@@ -1,0 +1,170 @@
+﻿@model PartyProductsMVC.ViewModels.InvoiceViewModel
+
+@{
+    ViewBag.Title = "Create";
+}
+
+<h2>Create</h2>
+
+
+@using (Html.BeginForm())
+{
+    @Html.AntiForgeryToken()
+    @Html.HiddenFor(model => model.InvoiceID)
+    <div class="form-horizontal">
+        <h4>Invoice</h4>
+        <hr />
+        @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+        <div class="form-group">
+            @Html.LabelFor(model => model.PartyID, "Party Name", htmlAttributes: new { @class = "control-label col-md-2" })
+            <div class="col-md-10">
+                @{
+                    if (Model.IsDisabled)
+                    {
+                        @Html.DropDownList("PartyID", null, htmlAttributes: new { @class = "form-control", @enabled="false", id = "ddParty" })
+                    }
+                    else
+                    {
+                        @Html.DropDownList("PartyID", null, htmlAttributes: new { @class = "form-control",id="ddParty" })
+                    }
+                }
+                @Html.ValidationMessageFor(model => model.PartyID, "", new { @class = "text-danger" })
+            </div>
+        </div>
+
+        <div class="form-group">
+            @Html.LabelFor(model => model.ProductID, "PartyID", htmlAttributes: new { @class = "control-label col-md-2" })
+            <div class="col-md-10">
+                @Html.DropDownList("ProductID", null, htmlAttributes: new { @class = "form-control", id = "ddProduct" })
+                @Html.ValidationMessageFor(model => model.ProductID, "", new { @class = "text-danger" })
+            </div>
+        </div>
+
+        <div class="form-group">
+            @Html.LabelFor(model => model.Rate, htmlAttributes: new { @class = "control-label col-md-2" })
+            <div class="col-md-10">
+                @Html.EditorFor(model => model.Rate, new { htmlAttributes = new { @class = "form-control", @readonly = "readonly", id="divRate" } })
+                @Html.ValidationMessageFor(model => model.Rate, "", new { @class = "text-danger" })
+            </div>
+        </div>
+
+        <div class="form-group">
+            @Html.LabelFor(model => model.Quantity, htmlAttributes: new { @class = "control-label col-md-2" })
+            <div class="col-md-10">
+                @Html.EditorFor(model => model.Quantity, new { htmlAttributes = new { @class = "form-control" } })
+                @Html.ValidationMessageFor(model => model.Quantity, "", new { @class = "text-danger" })
+            </div>
+        </div>
+
+        <div class="form-group">
+            <div class="col-md-offset-2 col-md-10">
+                <input type="submit" value="Create" class="btn btn-default" />
+            </div>
+        </div>
+    </div>
+}
+@if (Model.InvoiceID != 0)
+{
+    <table class="invoiceDetails">
+        <tr>
+            <th>
+                ID
+            </th>
+            <th>
+                Party Name
+            </th>
+            <th>
+                Product Name
+            </th>
+            <th>
+                Rate
+            </th>
+            <th>
+                Quantity
+            </th>
+            <th>
+                Total
+            </th>
+            <th></th>
+        </tr>
+        @foreach (var item in Model.InvoiceDetails)
+        {
+            <tr>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Id)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Party.PartyName)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Product.ProductName)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Rate)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Quantity)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Total)
+                </td>
+            </tr>
+        }
+    </table>
+}
+<div>
+    @Html.ActionLink("Back to List", "Index")
+</div>
+<script>
+
+</script>
+
+@section Scripts {
+    @Scripts.Render("~/bundles/jqueryval")
+    <script type="text/javascript">
+        $("#ddProduct").change(function () {
+            $("#divRate").css("display", "inline");
+            var productId = $(this).val();
+            productId = parseInt(productId);
+            console.log(productId);
+            $.ajax({
+                type: "POST",
+                url: "/Invoice/GetRate",
+                data: { selectedValue: productId },
+                
+                success: function (result) {
+                    console.log("1");
+                    console.log(result)
+                    $("#divRate").val(result[0].Rate)
+                    tempRate = result[0].ProductID ;
+                },
+                error: function (error) {
+                    console.log("2");
+                    console.log(JSON.stringify(error));
+                }
+            });
+        });
+        $("#ddParty").change(function () {
+            $("#ddProduct").css("display", "inline");
+            var partyId = $(this).val();
+            partyId = parseInt(partyId);
+            console.log(partyId);
+            $.ajax({
+                type: "POST",
+                url: "/Invoice/GetProduct",
+                data: { selectedValue: partyId },
+
+                success: function (data) {
+                    $("#ddProduct").empty();
+                    $.each(data, function (index, item) {
+                        $("#ddProduct").append('<option value="' + item.Id + '">' + item.ProductName + '</option>');
+                    });
+                },
+                error: function (error) {
+                    console.log("2");
+                    console.log(JSON.stringify(error));
+                }
+            });
+        });
+    </script>
+}
